@@ -58,8 +58,18 @@ encoding_args.add_argument(
     "--video-encoder",
     type=str,
     default="x264",
-    choices=["x264", "x265", "libaom-av1"],
-    help="Specify whether to use the x264 (H.264), x265 (H.265) or libaom-av1 (AV1) encoder",
+    choices=["x264",
+             "x265",
+             "libaom-av1",
+             "x264",
+             "x265",
+             "hevc_nvenc",
+             "h264_nvenc",
+             "nvenc",
+             "hevc_qsv",
+             "h264_qsv",
+             "av1_qsv"],
+    help="Specify encoder to use",
 )
 
 # The time interval for Overview Mode.
@@ -146,7 +156,8 @@ encoding_args.add_argument(
 )
 
 # Phone Model
-vmaf_args.add_argument("--phone-model", action="store_true", help="Enable VMAF phone model")
+vmaf_args.add_argument("--phone-model", action="store_true",
+                       help="Enable VMAF phone model")
 
 # PSNR
 optional_metrics_args.add_argument(

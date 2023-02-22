@@ -32,17 +32,30 @@ class EncodingArguments:
         self._outfile = value
 
     def get_arguments(self):
+        encoders_list = {
+            "libaom-av1": "libaom-av1",
+            "x264": "libx264",
+            "x265": "libx265",
+            "hevc_nvenc": "hevc_nvenc",
+            "h264_nvenc": "h264_nvenc",
+            "nvenc": "nvenc",
+            "hevc_qsv": "hevc_qsv",
+            "h264_qsv": "h264_qsv",
+            "av1_qsv": "av1_qsv"
+        }
+        encoder_to_use = encoders_list[self._encoder]
         base_encoding_arguments = [
             "-map",
             "0:V",
             "-c:v",
-            "libaom-av1" if self._encoder == "libaom-av1" else f"lib{self._encoder}",
-            "-crf",
-            self._crf,
+            encoder_to_use
         ]
+        prefix_arguments = []
 
         if self._encoder == "libaom-av1":
             encoding_arguments = base_encoding_arguments + [
+                "-crf",
+                self._crf,
                 "-b:v",
                 "0",
                 "-cpu-used",
@@ -50,15 +63,46 @@ class EncodingArguments:
                 *self._video_filters,
                 self._outfile,
             ]
+        elif self._encoder == "hevc_nvenc":
+            presetdict = {"slow": "p6", "medium": "p4", "fast": "p2"}
+            prefix_arguments = [
+                "-hwaccel", "cuda",
+                #"-hwaccel_output_format", "cuda"
+            ]
+            encoding_arguments = base_encoding_arguments + [
+                #"-crf", self._crf,
+                "-preset", presetdict[self._preset],
+                "-tune", "hq",
+                "-bufsize", "5M",
+                # "-rc", "vbr",
+                # "-cq", self._crf,
+                # "-qmin", self._crf,
+                # "-qmax", self._crf,
+                # "-b:v", "0",
+                "-rc", "constqp",
+                "-qp", self._crf,
+                "-b:v", "0K",
+                "-g", "250",
+                "-bf", "3",
+                "-b_ref_mode", "middle",
+                "-temporal-aq", "1",
+                "-rc-lookahead", "20",
+                "-i_qfactor", "0.75",
+                "-b_qfactor", "1.1",
+                *self._video_filters,
+                self._outfile,
+            ]
         else:
             encoding_arguments = base_encoding_arguments + [
+                "-crf",
+                self._crf,
                 "-preset",
                 self._preset,
                 *self._video_filters,
                 self._outfile,
             ]
 
-        return self._base_ffmpeg_arguments + encoding_arguments
+        return prefix_arguments + self._base_ffmpeg_arguments + encoding_arguments
 
 
 class LibVmafArguments:
